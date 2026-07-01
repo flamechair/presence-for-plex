@@ -28,6 +28,7 @@ Config file locations:
 | `show_buttons` | `true` | Show IMDb/MyAnimeList link buttons |
 | `show_progress` | `true` | Show playback progress timestamps |
 | `show_artwork` | `true` | Show media artwork instead of the Plex logo |
+| `discord_client` | `auto` | Which Discord client to use: `auto`, `stable`, `ptb`, or `canary` |
 | `enable_movies` / `enable_tv_shows` / `enable_music` | `true` | Toggle presence per media type |
 | `tv_details`, `tv_state`, `tv_image_text`, `movie_*`, `music_*` | see defaults | Display templates (see variables below) |
 

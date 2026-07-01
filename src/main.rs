@@ -65,7 +65,31 @@ async fn main() {
     let tray = tray::setup(tray_tx, config.plex_token.is_some());
 
     let mut discord = DiscordClient::new(&config.discord_client_id);
-    discord.connect();
+    match config.discord_client.as_str() {
+        "auto" => {
+            info!("Discord client: auto (scanning pipes 0-9)");
+            discord.connect_auto();
+        }
+        "stable" => {
+            info!("Discord client: stable (pipe 0)");
+            discord.connect_to(0);
+        }
+        "ptb" => {
+            info!("Discord client: PTB (pipe 1)");
+            discord.connect_to(1);
+        }
+        "canary" => {
+            info!("Discord client: Canary (pipe 2)");
+            discord.connect_to(2);
+        }
+        other => {
+            warn!(
+                "Unknown discord_client '{}', falling back to auto",
+                other
+            );
+            discord.connect_auto();
+        }
+    }
     let discord = Arc::new(Mutex::new(discord));
 
     #[cfg(feature = "tray")]
@@ -274,7 +298,7 @@ async fn handle_media(
                 if enabled {
                     let mut d = discord.lock().await;
                     if !d.is_connected() {
-                        d.connect();
+                        d.reconnect();
                     }
                     d.update(&build_presence(&info, &config));
                 }

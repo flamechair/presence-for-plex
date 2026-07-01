@@ -5,6 +5,10 @@ use std::path::PathBuf;
 #[serde(default)]
 pub struct Config {
     pub discord_client_id: String,
+    /// Which Discord client to target: "auto", "stable", "ptb", "canary"
+    /// Maps to pipe indices: stable=0, ptb=1, canary=2. "auto" scans all.
+    #[serde(default)]
+    pub discord_client: String,
     pub show_buttons: bool,
     pub show_progress: bool,
     pub show_artwork: bool,
@@ -32,6 +36,7 @@ impl Default for Config {
     fn default() -> Self {
         Self {
             discord_client_id: "1359742002618564618".to_string(),
+            discord_client: "auto".to_string(),
             show_buttons: true,
             show_progress: true,
             show_artwork: true,
