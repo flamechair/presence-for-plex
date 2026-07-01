@@ -136,10 +136,8 @@ impl DiscordClient {
         socket
             .read_exact(&mut data)
             .map_err(|e| format!("Read error: {}", e))?;
-        let response =
-            std::str::from_utf8(&data).map_err(|e| format!("UTF-8 error: {}", e))?;
-        let json_data: Value =
-            serde_json::from_str(response).map_err(|e| format!("JSON error: {}", e))?;
+        let response = std::str::from_utf8(&data).map_err(|e| format!("UTF-8 error: {}", e))?;
+        let json_data: Value = serde_json::from_str(response).map_err(|e| format!("JSON error: {}", e))?;
         Ok((opcode, json_data))
     }
 
