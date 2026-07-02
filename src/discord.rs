@@ -1,6 +1,6 @@
 use discord_rich_presence::activity;
-use log::{error, info, warn};
-use serde_json::{json, Value};
+use log::{error, info};
+use serde_json::{Value, json};
 use std::fs::{File, OpenOptions};
 use std::io::{Read, Write};
 use std::path::PathBuf;
@@ -82,10 +82,7 @@ impl DiscordClient {
                 }
             }
             Err(e) => {
-                error!(
-                    "Discord pipe {} not available: {}",
-                    pipe_index, e
-                );
+                error!("Discord pipe {} not available: {}", pipe_index, e);
                 false
             }
         }
@@ -136,11 +133,11 @@ impl DiscordClient {
         socket
             .read_exact(&mut data)
             .map_err(|e| format!("Read error: {}", e))?;
-        let response =
-            std::str::from_utf8(&data).map_err(|e| format!("UTF-8 error: {}", e))?;
-        let json_data: Value =
-            serde_json::from_str(response).map_err(|e| format!("JSON error: {}", e))?;
-        Ok((opcode, json_data))
+        let response = std::str::from_utf8(&data).map_err(|e| format!("UTF-8 error: {}", e))?;
+        Ok((
+            opcode,
+            serde_json::from_str(response).map_err(|e| format!("JSON error: {}", e))?,
+        ))
     }
 
     pub fn disconnect(&mut self) {

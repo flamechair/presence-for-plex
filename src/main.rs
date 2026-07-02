@@ -83,10 +83,7 @@ async fn main() {
             discord.connect_to(2);
         }
         other => {
-            warn!(
-                "Unknown discord_client '{}', falling back to auto",
-                other
-            );
+            warn!("Unknown discord_client '{}', falling back to auto", other);
             discord.connect_auto();
         }
     }
