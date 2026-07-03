@@ -100,10 +100,15 @@ async fn main() {
     let media_task = handle_media(media_rx, Arc::clone(&discord), Arc::clone(&config));
     tokio::spawn(media_task);
 
-    let sse_cancel = config
-        .plex_token
-        .clone()
-        .map(|token| spawn_monitoring(token, config.tmdb_token.clone(), config.plex_server_url.clone(), &cancel, &media_tx));
+    let sse_cancel = config.plex_token.clone().map(|token| {
+        spawn_monitoring(
+            token,
+            config.tmdb_token.clone(),
+            config.plex_server_url.clone(),
+            &cancel,
+            &media_tx,
+        )
+    });
 
     #[cfg(feature = "tray")]
     run_tray(
@@ -230,7 +235,9 @@ fn spawn_monitoring(
     let c = cancel.child_token();
     let monitor_cancel = c.clone();
     let tx = media_tx.clone();
-    tokio::spawn(async move { begin_monitoring(token, tmdb, tx, monitor_cancel, plex_server_url).await });
+    tokio::spawn(async move {
+        begin_monitoring(token, tmdb, tx, monitor_cancel, plex_server_url).await
+    });
     c
 }
 
