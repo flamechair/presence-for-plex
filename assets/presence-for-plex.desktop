@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=Presence for Plex
+Comment=Discord Rich Presence for Plex Media Server
+Exec=presence-for-plex
+Icon=presence-for-plex
+Terminal=false
+Categories=Utility;Network;
+Keywords=plex;discord;rich presence;media;
+StartupNotify=false
+X-GNOME-Autostart-enabled=false

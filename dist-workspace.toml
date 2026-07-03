@@ -17,6 +17,8 @@ install-path = "CARGO_HOME"
 install-updater = false
 # Don't overwrite customized MSI template
 allow-dirty = ["msi"]
+# Include icon and desktop files in archives
+include = ["assets/icon.png", "assets/icon-256.png", "assets/icon.ico", "assets/presence-for-plex.desktop", "assets/install-linux.sh"]
 
 [dist.dependencies.apt]
 libgtk-3-dev = "*"
