@@ -20,6 +20,11 @@ pub struct Config {
 
     pub tmdb_token: Option<String>,
 
+    /// Override Plex server URL, e.g. "http://192.168.10.70:32400"
+    /// When set, skips Plex cloud server discovery and connects directly.
+    /// Solves DNS resolution issues on clients that can't resolve LAN hostnames.
+    pub plex_server_url: Option<String>,
+
     // Format templates
     pub tv_details: String,
     pub tv_state: String,
@@ -45,6 +50,7 @@ impl Default for Config {
             enable_tv_shows: true,
             enable_music: true,
             tmdb_token: None,
+            plex_server_url: None,
             tv_details: "{show}".to_string(),
             tv_state: "S{season} · E{episode} - {title}".to_string(),
             tv_image_text: "{title}".to_string(),

@@ -16,7 +16,7 @@ use log::{error, info, warn};
 use media::{MediaType, MediaUpdate};
 use metadata::MetadataEnricher;
 use percent_encoding::{NON_ALPHANUMERIC, utf8_percent_encode};
-use plex_account::{APP_NAME, PlexAccount};
+use plex_account::{APP_NAME, PlexAccount, ServerConnection};
 use plex_server::PlexServer;
 use presence::build_presence;
 use simplelog::{CombinedLogger, Config as LogConfig, LevelFilter, SimpleLogger, WriteLogger};
@@ -103,7 +103,7 @@ async fn main() {
     let sse_cancel = config
         .plex_token
         .clone()
-        .map(|token| spawn_monitoring(token, config.tmdb_token.clone(), &cancel, &media_tx));
+        .map(|token| spawn_monitoring(token, config.tmdb_token.clone(), config.plex_server_url.clone(), &cancel, &media_tx));
 
     #[cfg(feature = "tray")]
     run_tray(
@@ -194,7 +194,7 @@ async fn run_tray(
                             old.cancel();
                         }
                         sse_cancel =
-                            Some(spawn_monitoring(token, config.tmdb_token.clone(), cancel, media_tx));
+                            Some(spawn_monitoring(token, config.tmdb_token.clone(), config.plex_server_url.clone(), cancel, media_tx));
                     }
                     None => {
                         warn!("Auth failed or timed out");
@@ -223,13 +223,14 @@ async fn run_tray(
 fn spawn_monitoring(
     token: String,
     tmdb: Option<String>,
+    plex_server_url: Option<String>,
     cancel: &CancellationToken,
     media_tx: &mpsc::UnboundedSender<MediaUpdate>,
 ) -> CancellationToken {
     let c = cancel.child_token();
     let monitor_cancel = c.clone();
     let tx = media_tx.clone();
-    tokio::spawn(async move { begin_monitoring(token, tmdb, tx, monitor_cancel).await });
+    tokio::spawn(async move { begin_monitoring(token, tmdb, tx, monitor_cancel, plex_server_url).await });
     c
 }
 
@@ -238,8 +239,27 @@ async fn begin_monitoring(
     tmdb: Option<String>,
     tx: mpsc::UnboundedSender<MediaUpdate>,
     cancel: CancellationToken,
+    plex_server_url: Option<String>,
 ) {
     let enricher = Arc::new(MetadataEnricher::new(tmdb));
+
+    // If a direct server URL is configured, skip cloud discovery entirely.
+    // This resolves DNS issues on clients that can't resolve LAN hostnames.
+    if let Some(url) = plex_server_url {
+        info!("Using configured Plex server URL: {}", url);
+        let conn = ServerConnection { uri: url };
+        let server = PlexServer::new(
+            "Plex".to_string(),
+            vec![conn],
+            token,
+            None, // no username in direct-URL mode
+        );
+        tokio::spawn(async move {
+            tokio::select! { _ = cancel.cancelled() => {} _ = server.start_monitoring(tx, enricher) => {} }
+        });
+        return;
+    }
+
     let mut account = PlexAccount::new();
 
     // Retry discovery, the network may not be up yet at login
