@@ -14,6 +14,9 @@ pub struct Config {
     pub show_artwork: bool,
 
     pub plex_token: Option<String>,
+    /// Manual server URL override — bypasses Plex account server discovery.
+    /// Example: "http://192.168.1.100:32400"
+    pub plex_server_url: Option<String>,
     pub enable_movies: bool,
     pub enable_tv_shows: bool,
     pub enable_music: bool,
@@ -41,6 +44,7 @@ impl Default for Config {
             show_progress: true,
             show_artwork: true,
             plex_token: None,
+            plex_server_url: None,
             enable_movies: true,
             enable_tv_shows: true,
             enable_music: true,

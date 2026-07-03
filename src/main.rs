@@ -103,7 +103,7 @@ async fn main() {
     let sse_cancel = config
         .plex_token
         .clone()
-        .map(|token| spawn_monitoring(token, config.tmdb_token.clone(), &cancel, &media_tx));
+        .map(|token| spawn_monitoring(token, config.tmdb_token.clone(), config.plex_server_url.clone(), &cancel, &media_tx));
 
     #[cfg(feature = "tray")]
     run_tray(
@@ -194,7 +194,7 @@ async fn run_tray(
                             old.cancel();
                         }
                         sse_cancel =
-                            Some(spawn_monitoring(token, config.tmdb_token.clone(), cancel, media_tx));
+                            Some(spawn_monitoring(token, config.tmdb_token.clone(), config.plex_server_url.clone(), cancel, media_tx));
                     }
                     None => {
                         warn!("Auth failed or timed out");
@@ -223,23 +223,42 @@ async fn run_tray(
 fn spawn_monitoring(
     token: String,
     tmdb: Option<String>,
+    plex_server_url: Option<String>,
     cancel: &CancellationToken,
     media_tx: &mpsc::UnboundedSender<MediaUpdate>,
 ) -> CancellationToken {
     let c = cancel.child_token();
     let monitor_cancel = c.clone();
     let tx = media_tx.clone();
-    tokio::spawn(async move { begin_monitoring(token, tmdb, tx, monitor_cancel).await });
+    tokio::spawn(async move { begin_monitoring(token, tmdb, plex_server_url, tx, monitor_cancel).await });
     c
 }
 
 async fn begin_monitoring(
     token: String,
     tmdb: Option<String>,
+    plex_server_url: Option<String>,
     tx: mpsc::UnboundedSender<MediaUpdate>,
     cancel: CancellationToken,
 ) {
     let enricher = Arc::new(MetadataEnricher::new(tmdb));
+
+    // Manual server URL override — bypasses Plex account discovery entirely
+    if let Some(url) = plex_server_url {
+        info!("Using manual server URL: {}", url);
+        let server = PlexServer::new(
+            "Manual Server".to_string(),
+            vec![plex_account::ServerConnection { uri: url }],
+            token,
+            None, // no username — session ownership can't be verified
+        );
+        tokio::select! {
+            _ = cancel.cancelled() => {}
+            _ = server.start_monitoring(tx, enricher) => {}
+        }
+        return;
+    }
+
     let mut account = PlexAccount::new();
 
     // Retry discovery, the network may not be up yet at login
