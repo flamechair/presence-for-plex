@@ -5,6 +5,10 @@ use std::path::PathBuf;
 #[serde(default)]
 pub struct Config {
     pub discord_client_id: String,
+    /// Which Discord client to target: "auto", "stable", "ptb", "canary"
+    /// Maps to pipe indices: stable=0, ptb=1, canary=2. "auto" scans all.
+    #[serde(default)]
+    pub discord_client: String,
     pub show_buttons: bool,
     pub show_progress: bool,
     pub show_artwork: bool,
@@ -15,6 +19,11 @@ pub struct Config {
     pub enable_music: bool,
 
     pub tmdb_token: Option<String>,
+
+    /// Override Plex server URL, e.g. "http://192.168.10.70:32400"
+    /// When set, skips Plex cloud server discovery and connects directly.
+    /// Solves DNS resolution issues on clients that can't resolve LAN hostnames.
+    pub plex_server_url: Option<String>,
 
     // Format templates
     pub tv_details: String,
@@ -32,6 +41,7 @@ impl Default for Config {
     fn default() -> Self {
         Self {
             discord_client_id: "1359742002618564618".to_string(),
+            discord_client: "auto".to_string(),
             show_buttons: true,
             show_progress: true,
             show_artwork: true,
@@ -40,6 +50,7 @@ impl Default for Config {
             enable_tv_shows: true,
             enable_music: true,
             tmdb_token: None,
+            plex_server_url: None,
             tv_details: "{show}".to_string(),
             tv_state: "S{season} · E{episode} - {title}".to_string(),
             tv_image_text: "{title}".to_string(),
